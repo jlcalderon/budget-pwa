@@ -13,11 +13,11 @@
         "url": "https://github.com/jlcalderon/budget-pwa.git"
     },
     "author": "",
-    "license": "ISC",
+    "license": "MIT",
     "bugs": {
-        "url": "https://github.com/coding-boot-camp/unit18hw/issues"
+        "url": "https://github.com/jlcalderon/budget-pwa/issues"
     },
-    "homepage": "https://github.com/jlcalderon/budget-pwa.git#readme",
+    "homepage": "https://github.com/jlcalderon/budget-pwa/blob/main/README.md",
     "dependencies": {
         "compression": "^1.7.4",
         "express": "^4.17.1",
