@@ -12,6 +12,7 @@ fetch("/api/transaction")
         populateTotal();
         populateTable();
         populateChart();
+        /* copyOnlineDB(); */
     });
 
 function populateTotal() {
@@ -76,6 +77,10 @@ function populateChart() {
             }]
         }
     });
+}
+
+function copyOnlineDB() {
+
 }
 
 function sendTransaction(isAdding) {
