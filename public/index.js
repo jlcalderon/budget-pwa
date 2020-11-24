@@ -12,7 +12,6 @@ fetch("/api/transaction")
         populateTotal();
         populateTable();
         populateChart();
-        /* copyOnlineDB(); */
     });
 
 function populateTotal() {
@@ -79,7 +78,9 @@ function populateChart() {
     });
 }
 
-function copyOnlineDB() {
+function saveRecord(transaction) {
+    console.log(JSON.stringify(transaction));
+    //Store transaction on indexedDB
 
 }
 
