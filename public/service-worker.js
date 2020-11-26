@@ -31,13 +31,13 @@ self.addEventListener("install", function(evt) {
 });
 
 // activate
-self.addEventListener("activate", function(evt) {
+/* self.addEventListener("activate", function(evt) {
     evt.waitUntil(
         createDB()
     );
 
     self.clients.claim();
-});
+}); */
 
 // fetch
 self.addEventListener("fetch", function(evt) {

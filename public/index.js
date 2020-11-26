@@ -1,4 +1,5 @@
 let transactions = [];
+let transactionsTemp = [];
 let myChart;
 
 fetch("/api/transaction")
@@ -79,9 +80,35 @@ function populateChart() {
 }
 
 function saveRecord(transaction) {
-    console.log(JSON.stringify(transaction));
-    //Store transaction on indexedDB
 
+    //Store transaction on indexedDB
+    const request = indexedDB.open("budgetAppOfflineDatabase", 1);
+    // Create an object store inside the onupgradeneeded method.
+    request.onupgradeneeded = event => {
+        const db = event.target.result;
+        const budgetStore = db.createObjectStore("budgetAppOfflineDatabase", { keyPath: "name" });
+        // Creates a nameIndex that we can query on.
+        budgetStore.createIndex("nameIndex", "name");
+    }
+
+    request.onsuccess = () => {
+        const db = request.result;
+        const trans = db.transaction(["budgetAppOfflineDatabase"], "readwrite");
+        const budgetStore = trans.objectStore("budgetAppOfflineDatabase");
+
+        // Adds data to our objectStore
+        budgetStore.add({
+            name: transaction.name,
+            value: transaction.value,
+            date: transaction.date
+        });
+        console.log(`record : ${JSON.stringify(transaction)} added while offline`);
+
+        transactionsTemp = budgetStore.getAll();
+        transactionsTemp.onsuccess = () => {
+            console.log(transactionsTemp.result);
+        }
+    }
 }
 
 function sendTransaction(isAdding) {
@@ -116,6 +143,44 @@ function sendTransaction(isAdding) {
     populateChart();
     populateTable();
     populateTotal();
+
+    if (transactionsTemp.length > 0) {
+        fetch("/api/transaction/bulk", {
+            method: "POST",
+            body: JSON.stringify(transactionsTemp),
+            headers: {
+                Accept: "application/json, text/plain, */*",
+                "Content-Type": "application/json"
+            }
+        }).then(response => {
+            nameEl.value = "";
+            amountEl.value = "";
+            return response.json();
+        });
+
+        transactionsTemp = [];
+
+        //Store transaction on indexedDB
+        const request = indexedDB.open("budgetAppOfflineDatabase", 1);
+        // Create an object store inside the onupgradeneeded method.
+        request.onupgradeneeded = event => {
+            const db = event.target.result;
+            const budgetStore = db.createObjectStore("budgetAppOfflineDatabase", { keyPath: "name" });
+            // Creates a nameIndex that we can query on.
+            budgetStore.createIndex("nameIndex", "name");
+        }
+
+        request.onsuccess = () => {
+            const db = request.result;
+            const trans = db.transaction(["budgetAppOfflineDatabase"], "readwrite");
+            const budgetStore = trans.objectStore("budgetAppOfflineDatabase");
+            budgetStore.clear();
+            console.log(request.result + " " + transactionsTemp);
+
+        }
+
+    }
+
 
     // also send to server
     fetch("/api/transaction", {
