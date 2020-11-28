@@ -11,7 +11,7 @@
 # Overview
 This repository contains a Budget Progressive Web Application (PWA) with offline functionalities. Often time while people travel they need to access to see thier budget, but not often we have internet access,for such reason this app is intented to have functionalities that work while offline so users can add or subtract funds to thier budgets and later when they go back online update the app database automatically fetching the data that was store while the app was offline.
 
-## Licence
+## License
 This is an open source app. This app is cover under the **MIT** licences terms. For more information open this link to see the app licence terms of use [*Licence*](https://opensource.org/licenses/MIT)
 
 ## Contributing
