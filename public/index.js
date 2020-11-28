@@ -85,27 +85,33 @@ function saveRecord(transaction) {
     const request = indexedDB.open("budgetAppOfflineDatabase", 1);
     // Create an object store inside the onupgradeneeded method.
     request.onupgradeneeded = event => {
-        const db = event.target.result;
-        const budgetStore = db.createObjectStore("budgetAppOfflineDatabase", { keyPath: "name" });
-        // Creates a nameIndex that we can query on.
-        budgetStore.createIndex("nameIndex", "name");
-    }
-
+            const db = event.target.result;
+            const budgetStore = db.createObjectStore("budgetAppOfflineDatabase", { keyPath: "name" });
+            // Creates a nameIndex that we can query on.
+            budgetStore.createIndex("nameIndex", "name");
+        }
+        /* When request to create objecsotre is successful do a transaction object */
     request.onsuccess = () => {
         const db = request.result;
         const trans = db.transaction(["budgetAppOfflineDatabase"], "readwrite");
         const budgetStore = trans.objectStore("budgetAppOfflineDatabase");
 
-        // Adds data to our objectStore
+        // Add the data to our objectStore
         budgetStore.add({
             name: transaction.name,
             value: transaction.value,
             date: transaction.date
         });
+        //print to see what record we just add
         console.log(`record : ${JSON.stringify(transaction)} added while offline`);
 
+        /* Update the temp array of transactions whit all records from indexedDB
+        This will allow us to refresh the app and not lost the data offline by keeping our temp array updated
+        */
         transactionsTemp = budgetStore.getAll();
+        /* When this is succusful */
         transactionsTemp.onsuccess = () => {
+            //Show what we have on the temp array
             console.log(transactionsTemp.result);
         }
     }
@@ -143,8 +149,8 @@ function sendTransaction(isAdding) {
     populateChart();
     populateTable();
     populateTotal();
-
-    if (transactionsTemp.length > 0) {
+    /* Check if the app is online and if we have transactions from indexedDB sotored in our temp array */
+    if (transactionsTemp.length > 0 && navigator.onLine) {
         fetch("/api/transaction/bulk", {
             method: "POST",
             body: JSON.stringify(transactionsTemp),
@@ -155,10 +161,21 @@ function sendTransaction(isAdding) {
         }).then(response => {
             nameEl.value = "";
             amountEl.value = "";
-            return response.json();
+            /* open indexedDB  */
+            const request = indexedDB.open("budgetAppOfflineDatabase", 1);
+            request.onupgradeneeded = event => {
+                const db = event.target.result;
+                /* create a transaction */
+                const trans = db.transaction(["budgetAppOfflineDatabase"], "readwrite");
+                /* Create object Store */
+                const budgetStore = trans.objectStore("budgetAppOfflineDatabase");
+                /* Clear data from offline database */
+                transactionsTemp = [];
+                budgetStore.clear();
+            }
+
         });
 
-        transactionsTemp = [];
 
         //Store transaction on indexedDB
         const request = indexedDB.open("budgetAppOfflineDatabase", 1);
@@ -220,3 +237,8 @@ document.querySelector("#add-btn").onclick = function() {
 document.querySelector("#sub-btn").onclick = function() {
     sendTransaction(false);
 };
+
+window.addEventListener("online", function(evt) {
+    evt.preventDefault();
+    console.log("back online: " + evt);
+});
