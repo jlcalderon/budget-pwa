@@ -1,4 +1,6 @@
+//Transactions array while online
 let transactions = [];
+//Transactions array while offline
 let transactionsTemp = [];
 let myChart;
 
@@ -149,6 +151,71 @@ function sendTransaction(isAdding) {
     populateChart();
     populateTable();
     populateTotal();
+
+    //Store transaction on indexedDB
+    const request = indexedDB.open("budgetAppOfflineDatabase", 1);
+    // Create an object store inside the onupgradeneeded method.
+    request.onupgradeneeded = event => {
+        const db = event.target.result;
+        const budgetStore = db.createObjectStore("budgetAppOfflineDatabase", { keyPath: "name" });
+        // Creates a nameIndex that we can query on.
+        budgetStore.createIndex("nameIndex", "name");
+    }
+
+    request.onsuccess = () => {
+        const db = request.result;
+        const trans = db.transaction(["budgetAppOfflineDatabase"], "readwrite");
+        const budgetStore = trans.objectStore("budgetAppOfflineDatabase");
+        budgetStore.clear();
+        console.log(request.result + " " + transactionsTemp);
+
+    }
+
+}
+
+
+// also send to server
+fetch("/api/transaction", {
+        method: "POST",
+        body: JSON.stringify(transaction),
+        headers: {
+            Accept: "application/json, text/plain, */*",
+            "Content-Type": "application/json"
+        }
+    })
+    .then(response => {
+        return response.json();
+    })
+    .then(data => {
+        if (data.errors) {
+            errorEl.textContent = "Missing Information";
+        } else {
+            // clear form
+            nameEl.value = "";
+            amountEl.value = "";
+        }
+    })
+    .catch(err => {
+        // fetch failed, so save in indexed db
+        saveRecord(transaction);
+
+        // clear form
+        nameEl.value = "";
+        amountEl.value = "";
+    });
+
+
+document.querySelector("#add-btn").onclick = function() {
+    sendTransaction(true);
+};
+
+document.querySelector("#sub-btn").onclick = function() {
+    sendTransaction(false);
+};
+
+window.addEventListener("online", function(evt) {
+    evt.preventDefault();
+    console.log("back online: " + evt);
     /* Check if the app is online and if we have transactions from indexedDB sotored in our temp array */
     if (transactionsTemp.length > 0 && navigator.onLine) {
         fetch("/api/transaction/bulk", {
@@ -175,70 +242,5 @@ function sendTransaction(isAdding) {
             }
 
         });
-
-
-        //Store transaction on indexedDB
-        const request = indexedDB.open("budgetAppOfflineDatabase", 1);
-        // Create an object store inside the onupgradeneeded method.
-        request.onupgradeneeded = event => {
-            const db = event.target.result;
-            const budgetStore = db.createObjectStore("budgetAppOfflineDatabase", { keyPath: "name" });
-            // Creates a nameIndex that we can query on.
-            budgetStore.createIndex("nameIndex", "name");
-        }
-
-        request.onsuccess = () => {
-            const db = request.result;
-            const trans = db.transaction(["budgetAppOfflineDatabase"], "readwrite");
-            const budgetStore = trans.objectStore("budgetAppOfflineDatabase");
-            budgetStore.clear();
-            console.log(request.result + " " + transactionsTemp);
-
-        }
-
     }
-
-
-    // also send to server
-    fetch("/api/transaction", {
-            method: "POST",
-            body: JSON.stringify(transaction),
-            headers: {
-                Accept: "application/json, text/plain, */*",
-                "Content-Type": "application/json"
-            }
-        })
-        .then(response => {
-            return response.json();
-        })
-        .then(data => {
-            if (data.errors) {
-                errorEl.textContent = "Missing Information";
-            } else {
-                // clear form
-                nameEl.value = "";
-                amountEl.value = "";
-            }
-        })
-        .catch(err => {
-            // fetch failed, so save in indexed db
-            saveRecord(transaction);
-
-            // clear form
-            nameEl.value = "";
-            amountEl.value = "";
-        });
-}
-
-document.querySelector("#add-btn").onclick = function() {
-    sendTransaction(true);
-};
-
-document.querySelector("#sub-btn").onclick = function() {
-    sendTransaction(false);
-};
-
-window.addEventListener("online", function(evt) {
-    evt.preventDefault();
-    console.log("back online: " + evt);
 });
