@@ -1,6 +1,7 @@
 const CACHE_NAME = "static-cache-v1";
-//const DATA_CACHE_NAME = "data-cache-v1";
 
+//Function written to create a indexedDB when the service worker starts
+//Not in use by now
 function createDB() {
     const request = indexedDB.open("budgetAppOfflineDatabase", 1);
     request.onsuccess = event => {
@@ -8,6 +9,7 @@ function createDB() {
     }
 }
 
+//Caching files to serve when offline
 const staticFilesToCache = [
     "/",
     "/index.js",
@@ -17,7 +19,7 @@ const staticFilesToCache = [
     "/icons/icon-512x512.png"
 ];
 
-
+/* Service worker life cycle methods */
 // install
 self.addEventListener("install", function(evt) {
     evt.waitUntil(
@@ -29,15 +31,6 @@ self.addEventListener("install", function(evt) {
 
     self.skipWaiting();
 });
-
-// activate
-/* self.addEventListener("activate", function(evt) {
-    evt.waitUntil(
-        createDB()
-    );
-
-    self.clients.claim();
-}); */
 
 // fetch
 self.addEventListener("fetch", function(evt) {
